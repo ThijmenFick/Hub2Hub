@@ -4,7 +4,6 @@ import sqlite3
 
 conn = sqlite3.connect("file_database.db")
 cursor = conn.cursor()
-
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS files (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,5 +24,30 @@ def new_file_record(filepath, tags):
                 (filepath, filesize, key, tags_string))
     conn.commit()
 
+def precheck_record(filepath, threshold):
+    new_key = image2key(filepath)
 
-new_file_record("dog.png", ["dog", "cute"])
+    cursor.execute("SELECT key FROM files")
+    rows = cursor.fetchall()
+    keys = [row[0] for row in rows]
+
+    all_matches = []
+
+    for key in keys:
+        matches = 0
+        total = len(new_key)
+
+        for c1, c2 in zip(new_key, key):
+            if c1 == c2:
+                matches += 1
+
+        if (matches / total) * 100 > threshold:
+            all_matches.append(key)
+
+    if len(all_matches) == 0:
+        print("No matches found")
+    else:
+        print(f"{len(all_matches)} match(es) found")
+
+#new_file_record("dog.png", ["dog", "cute"])
+#precheck_record("dog.png", 70)
